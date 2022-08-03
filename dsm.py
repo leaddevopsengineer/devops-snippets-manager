@@ -10,6 +10,7 @@
 import argparse
 from fileinput import filename
 import os
+from xmlrpc.client import ResponseError
 from rich.console import Console
 from rich.syntax import Syntax
 from rich.markdown import Markdown
@@ -22,12 +23,25 @@ import tokenize
 import requests
 from pprint import pprint
 import json
+from github import Github
+import asyncio
+from datetime import datetime
+import backoff
+import github
+from os.path import exists
+from time import sleep
+from random import random
+from threading import Thread
+import multiprocessing
+import time
 
 
+DIRECTORY = "archive"
+start_time = datetime.now().timestamp()
 FileContent = str
 Encoding = str
 NewLine = str
-
+list_of_requests = []
 
 from typing import (
     Any,
@@ -49,6 +63,36 @@ from typing import (
     cast,
 )
 
+def check_rate_limit(g):
+    rate_limit = g.get_rate_limit()
+    rate = rate_limit.search
+    if rate.remaining == 0:
+        print(f'You have 0/{rate.limit} API calls remaining. Reset time: {rate.reset}')
+    else:
+        print(f'You have {rate.remaining}/{rate.limit} API calls remaining')
+
+def check_if_file(myfilename):
+    file_exists = exists(DIRECTORY + "/" + myfilename)
+    if file_exists:
+        print("************************************* File Exists ******************************************************************")
+        return True
+    else:
+        print("************************************* File Does Not Exists ******************************************************************")
+        return False
+        
+    # for path, subdirs, files in os.walk(DIRECTORY):
+    #     for filename in files:
+    #         #print(os.path.join(path, filename))
+    #         print(filename)
+    #         print(myfilename)
+    #         if filename != myfilename:
+    #             print("************************************* File Does Not Exists ******************************************************************")
+    #             continue
+    #         else:
+    #             print("************************************* File Exists ******************************************************************")
+    #             return True
+            
+                
 def decode_bytes(src: bytes) -> Tuple[FileContent, Encoding, NewLine]:
     """Return a tuple of (decoded_contents, encoding, newline).
     `newline` is either CRLF or LF but `decoded_contents` is decoded with
@@ -63,6 +107,47 @@ def decode_bytes(src: bytes) -> Tuple[FileContent, Encoding, NewLine]:
     srcbuf.seek(0)
     with io.TextIOWrapper(srcbuf, encoding) as tiow:
         return tiow.read(), encoding, newline
+    
+@backoff.on_exception(backoff.expo, github.GithubException)
+def search_github():
+    """
+    query = '+'.join(keywords) + '+language:python+in:readme+in:description'
+    repositories = g.search_repositories(query=query)
+ 
+    """
+    name = multiprocessing.current_process().name
+    print ("Starting %s \n" %name)
+    time.sleep(60)
+    keywords='python'
+    query = '+'.join(keywords) + '+language:python+in:readme+in:description'
+    g = Github(os.getenv('API_TOKEN', '...'))
+    repositories = g.search_repositories(query=query)
+    # Add try except block with this exception looking for an empty repo - github.GithubException.GithubException
+    for repo in repositories:
+        check_rate_limit(g)
+        filename = repo.name + ".zip"
+        print(f'Here is the current filename {filename}')
+        if check_if_file(filename):
+            continue
+        else:
+            print(f'{repo.clone_url}, {repo.stargazers_count} stars')
+            archive_link = repo.get_archive_link("zipball", repo.default_branch)
+            response = requests.get(archive_link, headers={"Authorization": f"token {os.getenv('API_TOKEN', '...')}"})
+            open(DIRECTORY + "/" + repo.name + ".zip", 'wb').write(response.content)
+            contents = repo.get_contents("")
+            while contents:
+                file_content = contents.pop(0)
+                if file_content.type == "dir":
+                    contents.extend(repo.get_contents(file_content.path))
+                else:
+                    print(file_content)
+        
+
+
+        
+
+
+
 
 def viewfile(codeblock, console):
     """ Fix this so it displays any type of file """
@@ -133,6 +218,11 @@ def get_args():
     parser.add_argument("-g", "--pushgist",action="store_true", help='A block of code you would like to push to github gists')
     return parser.parse_args()
 
+def foo():
+    name = multiprocessing.current_process().name
+    print ("Starting %s \n" %name)
+    time.sleep(3)
+    print ("Exiting %s \n" %name)
 
 # --------------------------------------------------
 def main():
@@ -147,8 +237,15 @@ def main():
         runblack(args.filename, args.is_public)
     elif args.pushgist and args.filename:
         pushgist(args.filename, args.is_public)
-
+    #search_github()
+    #print('Starting background task...')
+    #daemon = Thread(target=search_github, daemon=True, name='GithubSearch')
+    #daemon.start()
+    background_process = multiprocessing.Process\
+                         (name='github_search',\
+                          target=search_github).start()
     
+     
 
 
 # --------------------------------------------------

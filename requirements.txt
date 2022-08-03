@@ -1,3 +1,6 @@
 rich
 pyperclip
-sudo apt-get install xclip
+github
+PyGithub
+grequests
+xclip
