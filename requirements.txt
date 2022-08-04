@@ -3,4 +3,5 @@ pyperclip
 github
 PyGithub
 grequests
-xclip
+black
+backoff
