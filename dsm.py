@@ -117,9 +117,11 @@ def search_github():
     """
     name = multiprocessing.current_process().name
     print ("Starting %s \n" %name)
-    time.sleep(60)
+    time.sleep(600)
     keywords='python'
-    query = '+'.join(keywords) + '+language:python+in:readme+in:description'
+    #query = '+'.join(keywords) + '+language:python+in:readme+in:description+stars:>=500'
+    #query = '+stars:>=500+fork:true+language:python'
+    query = 'stars:>=500 fork:true language:python'
     g = Github(os.getenv('API_TOKEN', '...'))
     repositories = g.search_repositories(query=query)
     # Add try except block with this exception looking for an empty repo - github.GithubException.GithubException
@@ -131,16 +133,19 @@ def search_github():
             continue
         else:
             print(f'{repo.clone_url}, {repo.stargazers_count} stars')
-            archive_link = repo.get_archive_link("zipball", repo.default_branch)
-            response = requests.get(archive_link, headers={"Authorization": f"token {os.getenv('API_TOKEN', '...')}"})
-            open(DIRECTORY + "/" + repo.name + ".zip", 'wb').write(response.content)
-            contents = repo.get_contents("")
-            while contents:
-                file_content = contents.pop(0)
-                if file_content.type == "dir":
-                    contents.extend(repo.get_contents(file_content.path))
-                else:
-                    print(file_content)
+            if repo.stargazers_count > 500:
+                archive_link = repo.get_archive_link("zipball", repo.default_branch)
+                response = requests.get(archive_link, headers={"Authorization": f"token {os.getenv('API_TOKEN', '...')}"})
+                open(DIRECTORY + "/" + repo.name + ".zip", 'wb').write(response.content)
+                contents = repo.get_contents("")
+                while contents:
+                    file_content = contents.pop(0)
+                    if file_content.type == "dir":
+                        contents.extend(repo.get_contents(file_content.path))
+                    else:
+                        print(file_content)
+            else:
+                continue
         
 
 
