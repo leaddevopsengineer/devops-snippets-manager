@@ -1,6 +1,5 @@
 rich
 pyperclip
-github
 PyGithub
 grequests
 black

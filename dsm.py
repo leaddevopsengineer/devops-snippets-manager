@@ -80,18 +80,7 @@ def check_if_file(myfilename):
         print("************************************* File Does Not Exists ******************************************************************")
         return False
         
-    # for path, subdirs, files in os.walk(DIRECTORY):
-    #     for filename in files:
-    #         #print(os.path.join(path, filename))
-    #         print(filename)
-    #         print(myfilename)
-    #         if filename != myfilename:
-    #             print("************************************* File Does Not Exists ******************************************************************")
-    #             continue
-    #         else:
-    #             print("************************************* File Exists ******************************************************************")
-    #             return True
-            
+
                 
 def decode_bytes(src: bytes) -> Tuple[FileContent, Encoding, NewLine]:
     """Return a tuple of (decoded_contents, encoding, newline).
@@ -107,6 +96,22 @@ def decode_bytes(src: bytes) -> Tuple[FileContent, Encoding, NewLine]:
     srcbuf.seek(0)
     with io.TextIOWrapper(srcbuf, encoding) as tiow:
         return tiow.read(), encoding, newline
+
+def save_repos(repo):
+    print(f'{repo.clone_url}, {repo.stargazers_count} stars')
+    if repo.stargazers_count > 500:
+        archive_link = repo.get_archive_link("zipball", repo.default_branch)
+        response = requests.get(archive_link, headers={"Authorization": f"token {os.getenv('API_TOKEN', '...')}"})
+        open(DIRECTORY + "/" + repo.name + ".zip", 'wb').write(response.content)
+        contents = repo.get_contents("")
+        while contents:
+            file_content = contents.pop(0)
+            if file_content.type == "dir":
+                contents.extend(repo.get_contents(file_content.path))
+            else:
+                print(file_content)
+
+
     
 @backoff.on_exception(backoff.expo, github.GithubException)
 def search_github():
@@ -117,7 +122,7 @@ def search_github():
     """
     name = multiprocessing.current_process().name
     print ("Starting %s \n" %name)
-    time.sleep(600)
+    time.sleep(0)
     keywords='python'
     #query = '+'.join(keywords) + '+language:python+in:readme+in:description+stars:>=500'
     #query = '+stars:>=500+fork:true+language:python'
@@ -127,25 +132,14 @@ def search_github():
     # Add try except block with this exception looking for an empty repo - github.GithubException.GithubException
     for repo in repositories:
         check_rate_limit(g)
+        time.sleep(0)
         filename = repo.name + ".zip"
         print(f'Here is the current filename {filename}')
         if check_if_file(filename):
             continue
         else:
-            print(f'{repo.clone_url}, {repo.stargazers_count} stars')
-            if repo.stargazers_count > 500:
-                archive_link = repo.get_archive_link("zipball", repo.default_branch)
-                response = requests.get(archive_link, headers={"Authorization": f"token {os.getenv('API_TOKEN', '...')}"})
-                open(DIRECTORY + "/" + repo.name + ".zip", 'wb').write(response.content)
-                contents = repo.get_contents("")
-                while contents:
-                    file_content = contents.pop(0)
-                    if file_content.type == "dir":
-                        contents.extend(repo.get_contents(file_content.path))
-                    else:
-                        print(file_content)
-            else:
-                continue
+            save_repos(repo)
+
         
 
 
