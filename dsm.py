@@ -79,7 +79,8 @@ def check_if_file(myfilename):
     else:
         print("************************************* File Does Not Exists ******************************************************************")
         return False
-        
+
+    
 
                 
 def decode_bytes(src: bytes) -> Tuple[FileContent, Encoding, NewLine]:
