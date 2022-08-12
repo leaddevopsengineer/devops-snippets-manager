@@ -156,6 +156,7 @@ def viewfile(codeblock, console):
     snippet = Syntax(codeblock.read(), "python")
     console.print(snippet)
     codeblock.close()
+    sys.exit()
 
 
 def createfile(clipboard, filename, is_public):
@@ -170,6 +171,7 @@ def createfile(clipboard, filename, is_public):
                 f.write(new_contents)
                 f.close()
                 pushgist(filename, is_public)
+                sys.exit()
         except NothingChanged:
             print("The file has not changed")
     else:
@@ -179,6 +181,7 @@ def createfile(clipboard, filename, is_public):
             n.write(src_contents)
             n.close()
             pushgist(filename, is_public)
+            sys.exit()
 
 
 def runblack(filename, is_public):
@@ -207,6 +210,7 @@ def pushgist(filename, is_public):
     headers = {'Authorization': f'token {token}'}
     r = requests.post(query_url, headers=headers, data=json.dumps(gist_dict))
     pprint(r.json())
+    sys.exit()
 
 
 # --------------------------------------------------
