@@ -64,7 +64,9 @@ from typing import (
 
 
 def check_rate_limit(g):
-    """ Checks rate limit so that when I'm downloading python code I know where I'm at with rate limit """
+    """ Checks rate limit so that when I'm downloading python code I know where I'm at with rate limit
+        pytest complete
+    """
     rate_limit = g.get_rate_limit()
     rate = rate_limit.search
     if rate.remaining == 0:
@@ -74,7 +76,9 @@ def check_rate_limit(g):
 
 
 def check_if_file(myfilename):
-    """ Checks to see if the file is already downloaded so we can skip it. """
+    """ Checks to see if the file is already downloaded so we can skip it.
+        pytest complete
+    """
     file_exists = exists(DIRECTORY + "/" + myfilename)
     if file_exists:
         print(
@@ -131,11 +135,12 @@ def search_github():
     keywords = 'python'
     # query = '+'.join(keywords) + '+language:python+in:readme+in:description+stars:>=500'
     # query = '+stars:>=500+fork:true+language:python'
-    query = 'stars:>=500 fork:true language:python'
+    query = 'stars:>=5000 fork:true language:python'
     g = Github(os.getenv('API_TOKEN', '...'))
     repositories = g.search_repositories(query=query)
     # Add try except block with this exception looking for an empty repo - github.GithubException.GithubException
     for repo in repositories:
+        print(f"The current repo is: {repo}")
         check_rate_limit(g)
         time.sleep(0)
         filename = repo.name + ".zip"
