@@ -1,4 +1,11 @@
 # DevOPs Snippets Manager
+
+## Requirements:
+#### * Add export of your Github PAT (API_TOKEN) Env Var to your .bashrc/.zshrc so that you can automate pushing Gist to Github
+#### * pip3 install -r requirements.txt
+
+---
+
 ## ToDo List
 ### Create a setup routine that creates a configuration file
 #### * Allows user to set Github PAT on the command line

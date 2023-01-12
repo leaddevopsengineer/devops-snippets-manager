@@ -260,9 +260,12 @@ def main():
     # print('Starting background task...')
     # daemon = Thread(target=search_github, daemon=True, name='GithubSearch')
     # daemon.start()
-    background_process = multiprocessing.Process \
-        (name='github_search', \
-         target=search_github).start()
+
+    # Uncomment next three lines to enable the code search
+    
+    #background_process = multiprocessing.Process \
+    #    (name='github_search', \
+    #     target=search_github).start()
 
 
 # --------------------------------------------------
